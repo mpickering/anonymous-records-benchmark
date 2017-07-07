@@ -1,0 +1,3 @@
+[submodule "CTRex"]
+	path = CTRex
+	url = git@github.com:atzeus/CTRex.git
