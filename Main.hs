@@ -53,9 +53,6 @@ data RNFSeq = RNFSeq
 
 --instance NFData P.Any where rnf _ = ()
 
-instance NFData (DD.Many xs) where
-  rnf (DD.Many n m) = rnf n `seq` m `seq` ()
-
 instance NFData t => NFData (ElField '(s, t)) where
   rnf (Field t) = rnf t
 
