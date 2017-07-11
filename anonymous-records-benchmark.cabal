@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 executable hlist-bench
   main-is:             Main.hs
   -- other-modules:
-  build-depends:       base >=4.9 && <4.10
+  build-depends:       base >=4.9 && <4.12
                      , criterion >=1.2 && <1.3
                      , template-haskell >=2.11 && <2.12
                      , deepseq >=1.4 && <1.5
@@ -26,17 +26,18 @@ executable hlist-bench
                      , unordered-containers >=0.2 && <0.3
                      , containers >=0.5 && <0.6
                      , ghc-prim
+                     , kinds, type-functions
 
                      -- libraries
-                     , CTRex >=0.6 && <0.7
+                     , CTRex >=0.7 && <0.8
                      , vinyl >=0.5 && <0.6
-                     , data-diverse
+                     , data-diverse == 0.8.1.0
                      , superrecord
-                     , records
+                     , records == 0.2
                      , labels
-                     , bookkeeper
+                     , bookkeeper == 0.3
                      , extensible
-                     , rawr
+                     , rawr == 0.1
 
                     -- Debugging
                      , dump-core

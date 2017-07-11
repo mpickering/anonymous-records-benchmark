@@ -1,3 +1,21 @@
 [submodule "CTRex"]
 	path = CTRex
 	url = git@github.com:atzeus/CTRex.git
+[submodule "labels"]
+	path = labels
+	url = git@github.com:chrisdone/labels.git
+[submodule "rawr"]
+	path = rawr
+	url = git@github.com:mpickering/rawr.git
+[submodule "bookkeeper"]
+	path = bookkeeper
+	url = git@github.com:mpickering/bookkeeper.git
+[submodule "records"]
+	path = records
+	url = git@github.com:mpickering/records.git
+[submodule "superrecord"]
+	path = superrecord
+	url = git@github.com:mpickering/superrecord.git
+[submodule "data-diverse"]
+	path = data-diverse
+	url = git@github.com:mpickering/data-diverse.git

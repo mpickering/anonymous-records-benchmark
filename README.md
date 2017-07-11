@@ -6,5 +6,13 @@ Benchmarks for
 * Association Lists
 * CTRex
 * data-diverse
-* SuperRecord
+* superrecord
 * Vinyl
+* records
+* bookkeeper
+* extensible
+* rawr
+* labels
+
+Note that you will not be able to build these benchmarks unless you are using
+a very recent development build of ghc which includes this patch - https://phabricator.haskell.org/D3715

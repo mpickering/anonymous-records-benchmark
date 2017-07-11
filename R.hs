@@ -9,7 +9,7 @@ fmap (:[]) $ dataD (return []) (mkName "X") [] Nothing
       varBangType
                   (mkName ("x"++show n))
                   (bangType (bang (return NoSourceUnpackedness) (return NoSourceStrictness)) (return ty))
-     | n <- [ 0 .. NN ] ] ] (return [])
+     | n <- [ 0 .. NN ] ] ] []
 
 r :: X
 r = $(recConE 'X [  do

@@ -1,2 +1,15 @@
 packages: CTRex/CTRex.cabal
+          labels/labels/labels.cabal
+          rawr/rawr.cabal
+          bookkeeper/bookkeeper.cabal
+          records/records.cabal
+          superrecord/superrecord.cabal
+          data-diverse/data-diverse.cabal
           *.cabal
+with-compiler: ghc
+
+allow-newer: base, template-haskell
+
+package anonymous-records-benchmarks
+  ghc-options: -v1
+
