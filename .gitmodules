@@ -1,9 +1,9 @@
 [submodule "CTRex"]
 	path = CTRex
-	url = git@github.com:atzeus/CTRex.git
+	url = git@github.com:mpickering/CTRex.git
 [submodule "labels"]
 	path = labels
-	url = git@github.com:chrisdone/labels.git
+	url = git@github.com:mpickering/labels.git
 [submodule "rawr"]
 	path = rawr
 	url = git@github.com:mpickering/rawr.git
