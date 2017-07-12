@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fcontext-stack=1000 #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}

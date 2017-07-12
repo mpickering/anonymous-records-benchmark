@@ -14,7 +14,7 @@ cabal-version:       >=1.10
 
 executable hlist-bench
   main-is:             Main.hs
-  -- other-modules:
+  other-modules: R DD Rawr SR V L THCommon Re La C E B
   build-depends:       base >=4.9 && <4.12
                      , criterion >=1.2 && <1.3
                      , template-haskell >=2.11 && <2.12
@@ -42,5 +42,6 @@ executable hlist-bench
                     -- Debugging
                      , dump-core
   -- hs-source-dirs:
-  ghc-options: -DNN=2 -ddump-splices -O2 -fplugin=DumpCore -fplugin-opt DumpCore:core-html
+  ghc-options: -ddump-splices -O2 -fplugin=DumpCore -fplugin-opt DumpCore:core-html -freduction-depth=1000
+  cpp-options: -DNN=2
   default-language:    Haskell2010
