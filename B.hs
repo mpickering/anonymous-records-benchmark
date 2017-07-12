@@ -8,12 +8,15 @@ module B where
 
 import Bookkeeper
 import Language.Haskell.TH
+import THCommon
 
 -- make a record of NN+1 entries
-r =  $(
-  foldr
-    (\x xs -> [| $xs & $x |])
-    [| emptyBook |]
-    [ [| ( $(labelE ("x" ++ show n)) =:  $sn ) |]
-        | n <- [ 0 .. NN :: Int ],
-          let sn = [| n :: Int |] ])
+mkDefs (\c -> [
+  mkRecord c
+    (
+    foldr
+      (\x xs -> [| $xs & $x |])
+      [| emptyBook |]
+      [ [| ( $(labelE ([c] ++ show n)) =:  $sn ) |]
+          | n <- [ 0 .. NN :: Int ],
+            let sn = [| n :: Int |] ]) ])

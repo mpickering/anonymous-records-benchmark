@@ -2,12 +2,15 @@
 module L where
 
 import Language.Haskell.TH
+import THCommon
 
-sequence [ valD (varP (mkName ("x" ++ n)))
-                (normalB [| n |]) []
-            | n <- map show [0 .. NN :: Int]]
+mkDefs (\c ->
 
+    [ valD (varP (mkName ([c] ++ n)))
+                  (normalB [| n |]) []
+              | n <- map show [0 .. NN :: Int]]
 
-r :: [(String, Int)]
-r = $(listE [ [| ( $(varE (mkName ("x" ++ show n))),  n :: Int ) |]
-              | n <- [0 .. NN :: Int] ] )
+    ++ [ (mkName [c]) `sigD` [t| [(String, Int)] |]]
+    ++ [ mkRecord c
+                (listE [ [| ( $(varE (mkName ([c] ++ show n))),  n :: Int ) |]
+                | n <- [0 .. NN :: Int] ] ) ])

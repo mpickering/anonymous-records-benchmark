@@ -7,9 +7,11 @@ module La where
 
 import Labels
 import Language.Haskell.TH
+import THCommon
 
 -- make a record of NN+1 entries
-r =  $( appsE $ (conE (tupleDataName ( NN + 1))) :
-                [ [| $(labelE ("x" ++ show n)) := $sn |]
+mkDefs (\c ->
+  [ mkRecord c (appsE $ (conE (tupleDataName ( NN + 1))) :
+                [ [| $(labelE ([c] ++ show n)) := $sn |]
                   | n <- [ 0 .. NN :: Int ],
-                  let sn = [| n :: Int |] ])
+                  let sn = [| n :: Int |] ])])

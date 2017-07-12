@@ -117,57 +117,57 @@ main = defaultMainWith
                   $(v) ]
          |]
 
-    vLookup n v = [| getField ($(v) ^. rlens $(dyn ("V.x"++show n))) |]
-    lLookup n v = [| fromJust $ lookup $(dyn ("L.x"++ show n)) $(v) |]
+    vLookup n v = [| getField ($(v) ^. rlens $(dyn ("V.a"++show n))) |]
+    lLookup n v = [| fromJust $ lookup $(dyn ("L.a"++ show n)) $(v) |]
     ddLookup :: Int -> ExpQ -> ExpQ
     ddLookup n v = [|  DD.fetchN $(sigE (conE 'Proxy) [t| Proxy $(litT (numTyLit (fromIntegral n))) |]) $(v) |]
     srLookup :: Int -> ExpQ -> ExpQ
-    srLookup n v = [| SR.get $(dyn ("SR.x" ++ show n)) $(v) |]
-    rLookup n v = [| $(dyn ("R.x"++show n)) $(v) |]
+    srLookup n v = [| SR.get $(dyn ("SR.a" ++ show n)) $(v) |]
+    rLookup n v = [| $(dyn ("R.a"++show n)) $(v) |]
 
-    cLookup n v = [| $(v) .! $(dyn ("C.x"++show n)) |]
+    cLookup n v = [| $(v) .! $(dyn ("C.a"++show n)) |]
 
-    rawrLookup n v = [| $(labelE ("x" ++ show n)) $(v) |]
+    rawrLookup n v = [| $(labelE ("a" ++ show n)) $(v) |]
 
-    bLookup n v = [| B.get $(labelE ("x" ++ show n)) $(v) |]
+    bLookup n v = [| B.get $(labelE ("a" ++ show n)) $(v) |]
 
-    eLookup n v = [| (view $(labelE ("x" ++ show n)) $(v)) :: Int |]
+    eLookup n v = [| (view $(labelE ("a" ++ show n)) $(v)) :: Int |]
 
-    laLookup n v = [| La.get $(labelE ("x" ++ show n)) $(v)|]
+    laLookup n v = [| La.get $(labelE ("a" ++ show n)) $(v)|]
 
-    reLookup n v = [| $(v) Re.!!! $(dyn ("Re.x" ++ show n))  |]
+    reLookup n v = [| $(v) Re.!!! $(dyn ("Re.a" ++ show n))  |]
 
   in listE $ concat
         [ [
-            mkGrp "C;append" '(.++) assocR [| C.r |],
-            mkGrp "V;append" '(<+>) assocR [| V.r |],
-            mkGrp "L;append"  '(++) assocR [| L.r |],
-            mkGrp "DD;append"  '(DD././) assocR [| DD.r |],
-            mkGrp "SR;append"  '(SR.++:) assocR [| SR.r |],
+            mkGrp "C;append" '(.++) assocR [| C.a |],
+            mkGrp "V;append" '(<+>) assocR [| V.a |],
+            mkGrp "L;append"  '(++) assocR [| L.a |],
+            mkGrp "DD;append"  '(DD././) assocR [| DD.a |],
+            mkGrp "SR;append"  '(SR.++:) assocR [| SR.a |],
             -- Rawr checks for duplicates
             -- Bookkeeper also checks for duplicates
             -- Labels provides no machinery for append
-            mkGrp "Re;append" 'Re.cat assocR [| Re.r |]
+            mkGrp "Re;append" 'Re.cat assocR [| Re.a |]
             ]  | assocR <- [False, True] ]
     ++ [
 
-           mkLook "B;lookup" bLookup [| B.r |],
-           mkLook "C;lookup" cLookup [| C.r |],
-           mkLook "DD;lookup" ddLookup [| DD.r |],
-           mkLook "E;lookup" eLookup [| E.r |],
-           mkLook "LA;lookup" laLookup [| La.r |],
-           mkLook "L;lookup" lLookup [| L.r |],
-           mkLook "Rawr;lookup" rawrLookup [| Rawr.r |],
-           mkLook "Re;lookup" reLookup [| Re.r |],
-           mkLook "R;lookup" rLookup [| R.r |],
-           mkLook "SR;lookup" srLookup [| SR.r |],
-           mkLook "V;lookup" vLookup [| V.r |]]
+           mkLook "B;lookup" bLookup [| B.a |],
+           mkLook "C;lookup" cLookup [| C.a |],
+           mkLook "DD;lookup" ddLookup [| DD.a |],
+           mkLook "E;lookup" eLookup [| E.a |],
+           mkLook "LA;lookup" laLookup [| La.a |],
+           mkLook "L;lookup" lLookup [| L.a |],
+           mkLook "Rawr;lookup" rawrLookup [| Rawr.a |],
+           mkLook "Re;lookup" reLookup [| Re.a |],
+           mkLook "R;lookup" rLookup [| R.a |],
+           mkLook "SR;lookup" srLookup [| SR.a |],
+           mkLook "V;lookup" vLookup [| V.a |]]
 
   )
 
 srLookup n v = [| SR.get $(dyn ("SR.x" ++ show n)) $(v) |]
 
-myDefn = $((foldr (\n b -> [| (SR.get $(dyn ("SR.x" ++ show n)) SR.r)  + $b |])
+myDefn = $((foldr (\n b -> [| (SR.get $(dyn ("SR.a" ++ show n)) SR.a)  + $b |])
                                      [| 0 |]
                                      [ 0 .. NN ] ))
 

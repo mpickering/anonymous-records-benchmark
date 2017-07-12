@@ -12,15 +12,7 @@ import GHC.TypeLits
 import Data.Proxy
 import "kinds" Data.Kind
 import Data.TypeFun
-
--- define variables x0 .. xNN to be labels
-sequence [ valD (varP (mkName ("x"++l)))
-                (normalB
-                     (conE 'Proxy `sigE` [t| Proxy $ty |]))
-                []
-      | l <- map show [ 0 .. NN ],
-      let ty = [t| $(litT (strTyLit l)) |] ]
-
+import THCommon
 
 instance Data.Record.Name (Proxy s) where
   name = Proxy
@@ -28,12 +20,19 @@ instance Data.Record.Name (Proxy s) where
 fixR :: f (Id KindStar) -> f (Id KindStar)
 fixR = id
 
--- make a record of NN+1 entries
---r :: f (Id KindStar)
-r = fixR $(
-  foldr
-    (\x xs -> [| $xs :& $x |])
-    [| X |]
-    [ [| $(dyn ("x" ++ show n)) := $sn |]
-        | n <- [ 0 .. NN :: Int ],
-          let sn = [| n :: Int |] ])
+-- define variables x0 .. xNN to be labels
+mkDefs (\c -> [ valD (varP (mkName (c : l)))
+                (normalB
+                     (conE 'Proxy `sigE` [t| Proxy $ty |]))
+                []
+              | l <- map show [ 0 .. NN ],
+              let ty = [t| $(litT (strTyLit l)) |] ]
+              ++
+   [ mkRecord c [| fixR $(
+                  foldr
+                    (\x xs -> [| $xs :& $x |])
+                    [| X |]
+                    [ [| $(dyn (c : show n)) := $sn |]
+                    | n <- [ 0 .. NN :: Int ],
+                    let sn = [| n :: Int |] ]) |]  ])
+

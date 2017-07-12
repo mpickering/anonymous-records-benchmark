@@ -6,20 +6,18 @@ module SR where
 import SuperRecord
 import Data.Proxy
 import Language.Haskell.TH
+import THCommon
 
 
---fixRecord :: Rec ElField b -> Rec ElField b
---fixRecord x = x
---
-sequence [ valD (varP (mkName ("x"++l))) (normalB [| FldProxy :: $ty |]) []
+mkDefs (\c ->
+
+  [ valD (varP (mkName ([c]++l))) (normalB [| FldProxy :: $ty |]) []
       | l <- map show [ 0 .. NN :: Int ],
       let ty = [t| FldProxy $(litT (strTyLit l)) |] ]
-
--- make a record of NN+1 entries
-r =  $(
-  foldr
-    (\x xs -> [| $x `rcons` $xs |])
-    [| rnil |]
-    [ [| $(dyn("x" ++ show n)) :=  $sn |]
-        | n <- [ 0 .. NN :: Int ],
-          let sn = [| n :: Int |] ])
+  ++
+  [ mkRecord c (foldr
+                (\x xs -> [| $x `rcons` $xs |])
+                [| rnil |]
+                [ [| $(dyn([c] ++ show n)) :=  $sn |]
+                | n <- [ 0 .. NN :: Int ],
+                  let sn = [| n :: Int |] ])] )
