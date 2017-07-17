@@ -19,3 +19,6 @@
 [submodule "data-diverse"]
 	path = data-diverse
 	url = git@github.com:mpickering/data-diverse.git
+[submodule "extensible"]
+	path = extensible
+	url = git@github.com:mpickering/extensible.git

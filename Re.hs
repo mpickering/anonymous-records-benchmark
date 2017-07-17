@@ -20,6 +20,7 @@ instance Data.Record.Name (Proxy s) where
 fixR :: f (Id KindStar) -> f (Id KindStar)
 fixR = id
 
+
 -- define variables x0 .. xNN to be labels
 mkDefs (\c -> [ valD (varP (mkName (c : l)))
                 (normalB

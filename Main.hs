@@ -12,6 +12,10 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# OPTIONS -fno-full-laziness #-}
 module Main where
 
 #ifndef WITH_CTREX
@@ -22,6 +26,7 @@ import Criterion.Main
 import Criterion.Types
 --import Criterion.Config
 import Language.Haskell.TH
+import THCommon
 
 --import qualified H
 --import qualified Hdup
@@ -52,13 +57,31 @@ import Control.Monad.Identity
 import Data.Tagged
 import qualified Data.Diverse.Many.Internal as DD
 import qualified Bookkeeper as B
+import qualified Bookkeeper.Internal as B
 import qualified Labels as La
 import qualified Data.Record.Combinators as Re
 import qualified Data.Record as Re
 import qualified Data.TypeFun as TF
+import qualified Data.Vinyl as V
+import qualified Data.Rawr as Rawr
+import qualified Data.OpenRecords as C
+import qualified Data.Type.Map as B
+
 
 import qualified GHC.Prim as P
 import GHC.Generics
+
+instance NFData v => NFData ((La.:=) s v) where
+  rnf (p La.:= v) = rnf v
+
+
+
+instance NFData (B.Book' r) where
+instance NFData (B.Map r) where
+  rnf (B.Empty) = ()
+  rnf (B.Ext k v m) = rnf m
+
+deriving instance Generic (B.Book' r)
 
 deriving instance Generic ((rec Re.:& field) style)
 deriving instance Generic (Re.X style)
@@ -90,10 +113,13 @@ main = defaultMainWith
     maxOps = 5
     -- makes nf (\ end -> list `op` list `op` list `op` end) list
     -- when maxOps = 4
-    mkGrp :: String -> Name -> Bool -> ExpQ -> ExpQ
-    mkGrp title op assocR list =
-      let fold | assocR = foldr | otherwise = foldl in
-      [| bgroup $(stringE (title ++ ";" ++ show assocR))
+    mkGrp :: String -> Name -> ExpQ
+    mkGrp title op =
+      [| bgroup title |] `appE`
+      (listE [
+        let fold | assocR = foldr | otherwise = foldl
+            list = varE (mkName (title ++ ".a")) in
+        [| bgroup $(stringE (show assocR))
           $(listE [ [| bench $(stringE (show n)) $
                         nf (\ end -> $(fold
                                 (\a b -> [| $(varE op) $a $b |])
@@ -101,20 +127,38 @@ main = defaultMainWith
                                 (replicate (n-1) list)
                           ))
                         $list |]
-                | n <- [ 2 .. maxOps ] ]) |]
+                  | n <- [ 2 .. maxOps ] ]) |] | assocR <- [True, False]])
+
+    -- Makes an append example but of distinct records
+    mkAppendDiff :: String -> Name -> ExpQ ->  ExpQ
+    mkAppendDiff title op list =
+      [| bench $(stringE title) $
+          nf $(lam1E lamPat (foldr (\a b -> appsE [varE op, a, b])
+                             list
+                             [ varE (mkName ("x" ++ show n)) | n <- [0 .. defBound ]])) $(genTup title) |]
+      where
+        lamPat = tupP [ varP (mkName ("x" ++ show n)) | n <- [0 .. defBound] ]
 
 
-    mkLook :: String -> (Int -> ExpQ -> ExpQ) -> ExpQ -> ExpQ
-    mkLook title lookup v =
-        [| bgroup title
-            [ bench "++" $
+    mkLook :: String -> (Int -> ExpQ -> ExpQ) -> ExpQ
+    mkLook title lookup =
+        [| bench title $
                 nf
                     $(lam1E ((newName "v") >>= varP)
                          (foldr (\n b -> [| $(lookup n (dyn "v"))  + $b |])
                                     [| 0 |]
                                     [ 0 .. NN ] ))
-                  $(v) ]
+                  $(varE $ mkName (title ++ ".a"))
          |]
+
+    mkUpdate :: String -> (ExpQ -> ExpQ) -> ExpQ
+    mkUpdate name update =
+      [| bench name $
+          nf (\v -> $(appN 5 update [| v |])) $(varE (mkName (name ++ ".a"))) |]
+
+    appN :: Int -> (a -> a) -> a -> a
+    appN 0 f = id
+    appN k f = appN (k - 1) f . f
 
     vLookup n v = [| getField ($(v) ^. rlens $(dyn ("V.a"++show n))) |]
     lLookup n v = [| fromJust $ lookup $(dyn ("L.a"++ show n)) $(v) |]
@@ -136,33 +180,97 @@ main = defaultMainWith
 
     reLookup n v = [| $(v) Re.!!! $(dyn ("Re.a" ++ show n))  |]
 
-  in listE $ concat
-        [ [
-            mkGrp "C;append" '(.++) assocR [| C.a |],
-            mkGrp "V;append" '(<+>) assocR [| V.a |],
-            mkGrp "L;append"  '(++) assocR [| L.a |],
-            mkGrp "DD;append"  '(DD././) assocR [| DD.a |],
-            mkGrp "SR;append"  '(SR.++:) assocR [| SR.a |],
+    genTup mod = tupE [ varE (mkName (mod ++ "." ++ [c])) | c <- defNames ]
+
+    bUpdate :: ExpQ -> ExpQ
+    bUpdate e = [| B.set (#a0) 10 $e |]
+
+    cUpdate :: ExpQ -> ExpQ
+    cUpdate e = [| C.update C.a0 10 $e |]
+
+    dUpdate e = [| DD.replaceN (Proxy @0) $e 10 |]
+
+    -- This library is borked, type infernce fails for even
+    -- simple sets.
+    -- https://github.com/fumieval/extensible/issues/11
+    eUpdate e = [| set #a0 10 $e |]
+
+    laUpdate e = [| La.set #a0 10 $e |]
+
+
+    lUpdate e = [| L.updateList "a0" 10 $e |]
+
+    rawrUpdate e = [| Control.Lens.set (Rawr.unwrapLens #a0) (10 :: Int) $e |]
+
+    reUpdate e = [| $e Re./// (Re.X Re.:& $(dyn "Re.a0") Re.:= 10) |]
+
+    rUpdate e = [| $e { R.a0 = 10 } |]
+
+    srUpdate e = [| SR.set SR.a0 10 $e  |]
+
+    vUpdate e = [| V.rput (V.a0 V.=:: 10) $e |]
+
+    benchgroup name bs = appsE ([[| bgroup name |], listE bs])
+
+  in listE $
+        [ benchgroup "Same-Append"
+            [
+            mkGrp "C" '(.++) ,
+            mkGrp "V" '(<+>) ,
+            mkGrp "L"  '(++) ,
+            mkGrp "DD"  '(DD././) ,
+            mkGrp "SR"  '(SR.++:) ,
             -- Rawr checks for duplicates
             -- Bookkeeper also checks for duplicates
             -- Labels provides no machinery for append
-            mkGrp "Re;append" 'Re.cat assocR [| Re.a |]
-            ]  | assocR <- [False, True] ]
-    ++ [
-
-           mkLook "B;lookup" bLookup [| B.a |],
-           mkLook "C;lookup" cLookup [| C.a |],
-           mkLook "DD;lookup" ddLookup [| DD.a |],
-           mkLook "E;lookup" eLookup [| E.a |],
-           mkLook "LA;lookup" laLookup [| La.a |],
-           mkLook "L;lookup" lLookup [| L.a |],
-           mkLook "Rawr;lookup" rawrLookup [| Rawr.a |],
-           mkLook "Re;lookup" reLookup [| Re.a |],
-           mkLook "R;lookup" rLookup [| R.a |],
-           mkLook "SR;lookup" srLookup [| SR.a |],
-           mkLook "V;lookup" vLookup [| V.a |]]
+            mkGrp "Re" 'Re.cat ] ]
+    ++ [ benchgroup "Lookup"
+           [mkLook "B" bLookup ,
+           mkLook "C" cLookup,
+           mkLook "DD" ddLookup ,
+           mkLook "E" eLookup ,
+           mkLook "La" laLookup ,
+           mkLook "L" lLookup ,
+           mkLook "Rawr" rawrLookup  ,
+           mkLook "Re" reLookup ,
+           mkLook "R" rLookup  ,
+           mkLook "SR" srLookup ,
+           mkLook "V" vLookup ] ]
+   ++ [ benchgroup "Distinct-Append"
+           [ -- B doesn't implement append
+            mkAppendDiff "C" '(.++) [| C.empty |]
+           , mkAppendDiff "DD" '(DD././) [| DD.nil |]
+--         , mkAppendDiff "E"  _ [| E.emptyRecord |] (genTup "E")
+--         , mkAppendDiff "la"
+           , mkAppendDiff "L" '(++) [| [] |]
+           -- Only supports up to size 8 records..
+           -- , mkAppendDiff "Rawr" 'f [| z |] (genTup "Rawr")
+           , mkAppendDiff "Re" 'Re.cat [| renil |]
+           -- Normal records can't be appended
+           , mkAppendDiff "SR" '(SR.++:) [| SR.rnil |]
+           , mkAppendDiff "V" '(<+>) [| V.RNil |]
+           ]]
+   ++ [ benchgroup "update"
+                [ mkUpdate "B" bUpdate
+                , mkUpdate "C" cUpdate
+                , mkUpdate "DD" dUpdate
+                , mkUpdate "E" eUpdate
+--                https://github.com/fumieval/extensible/issues/11
+                , mkUpdate "La" laUpdate
+                , mkUpdate "L" lUpdate
+                , mkUpdate "Rawr" rawrUpdate
+                , mkUpdate "Re" reUpdate
+                , mkUpdate "R" rUpdate
+                , mkUpdate "SR" srUpdate
+                , mkUpdate "V" vUpdate ]]
 
   )
+
+
+
+f = (Rawr.:*:)
+z = Rawr.R0
+renil = Re.X
 
 srLookup n v = [| SR.get $(dyn ("SR.x" ++ show n)) $(v) |]
 

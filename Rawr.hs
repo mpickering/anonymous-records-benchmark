@@ -15,7 +15,7 @@ import THCommon
 mkDefs (\c ->
   [ mkRecord c (foldr
                 (\x xs -> [| $x :*: $xs |])
-                [| R (#y := (0 :: Int)) |]
+                [| R0 |]
                 [ [| R ( $(labelE ([c] ++ show n)) :=  $sn ) |]
                 | n <- [ 0 .. NN :: Int ],
                   let sn = [| n :: Int |] ]) ])

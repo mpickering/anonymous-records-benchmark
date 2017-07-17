@@ -5,6 +5,7 @@ packages: CTRex/CTRex.cabal
           records/records.cabal
           superrecord/superrecord.cabal
           data-diverse/data-diverse.cabal
+          extensible/extensible.cabal
           *.cabal
 with-compiler: ghc
 
