@@ -14,9 +14,9 @@ mkDefs (\c ->
 
     [ valD (varP (mkName ([c] ++ n)))
                   (normalB [| n |]) []
-              | n <- map show [0 .. NN :: Int]]
+              | n <- map show [0 .. fieldBound :: Int]]
 
     ++ [ (mkName [c]) `sigD` [t| [(String, Int)] |]]
     ++ [ mkRecord c
                 (listE [ [| ( $(varE (mkName ([c] ++ show n))),  n :: Int ) |]
-                | n <- [0 .. NN :: Int] ] ) ])
+                | n <- [0 .. fieldBound :: Int] ] ) ])

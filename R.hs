@@ -16,10 +16,10 @@ mkDefs (\c ->
         varBangType
                     (mkName ([c]++show n))
                     (bangType (bang (return NoSourceUnpackedness) (return NoSourceStrictness)) (return ty))
-      | n <- [ 0 .. NN ] ] ] [derivClause Nothing [conT (mkName "Generic")
+      | n <- [ 0 .. fieldBound ] ] ] [derivClause Nothing [conT (mkName "Generic")
                                                   ,conT (mkName "NFData")]] ]
   ++
   [ mkRecord c (recConE dcName [  do
     e <- [| n |]
     return (mkName ([c] ++ show n), e)
-        | n <- [0 .. NN :: Int ]] ) ] )
+        | n <- [0 .. fieldBound :: Int ]] ) ] )

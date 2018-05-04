@@ -10,12 +10,12 @@ import Data.Proxy
 import Language.Haskell.TH
 import THCommon
 
--- make a record of NN+1 entries
+-- make a record of fieldBound+1 entries
 --r :: R ( "x0" := Int, "x1" := Int, "x2" := Int, "x3" := Int )
 mkDefs (\c ->
   [ mkRecord c (foldr
                 (\x xs -> [| $x :*: $xs |])
                 [| R0 |]
                 [ [| R ( $(labelE ([c] ++ show n)) :=  $sn ) |]
-                | n <- [ 0 .. NN :: Int ],
+                | n <- [ 0 .. fieldBound :: Int ],
                   let sn = [| n :: Int |] ]) ])

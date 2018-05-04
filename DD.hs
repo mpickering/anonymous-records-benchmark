@@ -9,11 +9,11 @@ import Language.Haskell.TH
 import THCommon
 
 
--- make a record of NN+1 entries
+-- make a record of fieldBound+1 entries
 mkDefs (\c ->
   [ mkRecord c (foldr
               (\x xs -> [| $x /./ $xs |])
               [| nil |]
               [ [| single $sn |]
-              | n <- [ 0 .. NN :: Int ],
+              | n <- [ 0 .. fieldBound :: Int ],
                 let sn = [| n :: Int |] ]) ] )

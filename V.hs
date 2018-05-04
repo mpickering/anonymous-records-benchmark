@@ -19,13 +19,13 @@ Proxy =:: t = Field @s t
 fixRecord :: Rec ElField r -> Rec ElField r
 fixRecord = id
 
--- define variables x0 .. xNN to be labels
+-- define variables x0 .. xfieldBound to be labels
 mkDefs (\c ->
   [valD (varP (mkName ([c]++l)))
                 (normalB
                      (conE 'Proxy `sigE` [t| Proxy '($ty, Int) |]))
                 []
-      | l <- map show [ 0 .. NN ],
+      | l <- map show [ 0 .. fieldBound ],
       let ty = [t| $(litT (strTyLit l)) |] ]
   ++
    [ mkRecord c [| fixRecord $(
@@ -33,7 +33,7 @@ mkDefs (\c ->
     (\x xs -> [| $x <+> $xs |])
     [| RNil |]
     [ [| $(dyn ([c] ++ show n)) =: $sn |]
-        | n <- [ 0 .. NN :: Int ],
+        | n <- [ 0 .. fieldBound :: Int ],
           let sn = [| n :: Int |] ]) |] ] )
 
 type A = ['("0", Int), '("1", Int), '("2", Int)]

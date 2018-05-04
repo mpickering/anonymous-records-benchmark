@@ -147,7 +147,7 @@ main = defaultMainWith
                     $(lam1E ((newName "v") >>= varP)
                          (foldr (\n b -> [| $(lookup n (dyn "v"))  + $b |])
                                     [| 0 |]
-                                    [ 0 .. NN ] ))
+                                    [ 0 .. fieldBound ] ))
                   $(varE $ mkName (title ++ ".a"))
          |]
 
@@ -182,33 +182,36 @@ main = defaultMainWith
 
     genTup mod = tupE [ varE (mkName (mod ++ "." ++ [c])) | c <- defNames ]
 
-    bUpdate :: ExpQ -> ExpQ
-    bUpdate e = [| B.set (#a0) 10 $e |]
+    labelA :: Int -> ExpQ
+    labelA n = labelE ("a" ++ show n)
 
-    cUpdate :: ExpQ -> ExpQ
-    cUpdate e = [| C.update C.a0 10 $e |]
+    bUpdate :: Int -> ExpQ -> ExpQ
+    bUpdate n e = [| B.set $(labelA n) 10 $e |]
 
-    dUpdate e = [| DD.replaceN (Proxy @0) $e 10 |]
+    cUpdate :: Int -> ExpQ -> ExpQ
+    cUpdate n e = [| C.update $(dyn("C.a" ++ show n)) 10 $e |]
+
+    dUpdate n e = [| DD.replaceN (Proxy :: Proxy $(litT (numTyLit (fromIntegral n)))) $e 10 |]
 
     -- This library is borked, type infernce fails for even
     -- simple sets.
     -- https://github.com/fumieval/extensible/issues/11
-    eUpdate e = [| set #a0 10 $e |]
+    eUpdate n e = [| set $(labelA n) 10 $e |]
 
-    laUpdate e = [| La.set #a0 10 $e |]
+    laUpdate n e = [| La.set $(labelA n) 10 $e |]
 
 
-    lUpdate e = [| L.updateList "a0" 10 $e |]
+    lUpdate n e = [| L.updateList ("a" ++ show n) 10 $e |]
 
-    rawrUpdate e = [| Control.Lens.set (Rawr.unwrapLens #a0) (10 :: Int) $e |]
+    rawrUpdate n e = [| Control.Lens.set (Rawr.unwrapLens $(labelA n)) (10 :: Int) $e |]
 
-    reUpdate e = [| $e Re./// (Re.X Re.:& $(dyn "Re.a0") Re.:= 10) |]
+    reUpdate n e = [| $e Re./// (Re.X Re.:& $(dyn ("Re.a" ++ show n)) Re.:= 10) |]
 
-    rUpdate e = [| $e { R.a0 = 10 } |]
+    rUpdate n e = e `recUpdE`  [return (mkName ("R.a" ++ show n), LitE (IntegerL 11) )]
 
-    srUpdate e = [| SR.set SR.a0 10 $e  |]
+    srUpdate n e = [| SR.set $(dyn ("SR.a" ++ show n)) 10 $e  |]
 
-    vUpdate e = [| V.rput (V.a0 V.=:: 10) $e |]
+    vUpdate n e = [| V.rput ($(dyn ("V.a" ++ show n)) V.=:: 10) $e |]
 
     benchgroup name bs = appsE ([[| bgroup name |], listE bs])
 
@@ -250,19 +253,21 @@ main = defaultMainWith
            , mkAppendDiff "SR" '(SR.++:) [| SR.rnil |]
            , mkAppendDiff "V" '(<+>) [| V.RNil |]
            ]]
-   ++ [ benchgroup "update"
-                [ mkUpdate "B" bUpdate
-                , mkUpdate "C" cUpdate
-                , mkUpdate "DD" dUpdate
-                , mkUpdate "E" eUpdate
+   ++ [
+        benchgroup "update"
+         [ benchgroup (show n)
+                [ mkUpdate "B" (bUpdate n)
+                , mkUpdate "C" (cUpdate n)
+                , mkUpdate "DD" (dUpdate n)
+                , mkUpdate "E" (eUpdate n)
 --                https://github.com/fumieval/extensible/issues/11
-                , mkUpdate "La" laUpdate
-                , mkUpdate "L" lUpdate
-                , mkUpdate "Rawr" rawrUpdate
-                , mkUpdate "Re" reUpdate
-                , mkUpdate "R" rUpdate
-                , mkUpdate "SR" srUpdate
-                , mkUpdate "V" vUpdate ]]
+                , mkUpdate "La" (laUpdate n)
+                , mkUpdate "L" (lUpdate n)
+                , mkUpdate "Rawr" (rawrUpdate n)
+                , mkUpdate "Re" (reUpdate n)
+                , mkUpdate "R" (rUpdate n)
+                , mkUpdate "SR" (srUpdate n)
+                , mkUpdate "V" (vUpdate n) ] | n <- [0.. fieldBound]]]
 
   )
 
@@ -276,5 +281,5 @@ srLookup n v = [| SR.get $(dyn ("SR.x" ++ show n)) $(v) |]
 
 myDefn = $((foldr (\n b -> [| (SR.get $(dyn ("SR.a" ++ show n)) SR.a)  + $b |])
                                      [| 0 |]
-                                     [ 0 .. NN ] ))
+                                     [ 0 .. fieldBound ] ))
 

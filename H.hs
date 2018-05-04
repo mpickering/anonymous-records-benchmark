@@ -9,11 +9,11 @@ import Language.Haskell.TH
 -- no duplicate check
 x .**. Record r = Record (HCons x r)
 
-makeLabelable (unwords [ "x" ++ show n | n <- [0 .. NN]])
+makeLabelable (unwords [ "x" ++ show n | n <- [0 .. fieldBound]])
 
 r = $(foldr
         (\x xs ->  [| $x .**. $xs |])
         [| emptyRecord |]
         [ [| $(dyn ("x"++ show l)) .==. (l :: Int) |]
-          | l <- [0 .. NN :: Int] ]
+          | l <- [0 .. fieldBound :: Int] ]
 

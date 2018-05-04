@@ -21,12 +21,12 @@ fixR :: f (Id KindStar) -> f (Id KindStar)
 fixR = id
 
 
--- define variables x0 .. xNN to be labels
+-- define variables x0 .. xfieldBound to be labels
 mkDefs (\c -> [ valD (varP (mkName (c : l)))
                 (normalB
                      (conE 'Proxy `sigE` [t| Proxy $ty |]))
                 []
-              | l <- map show [ 0 .. NN ],
+              | l <- map show [ 0 .. fieldBound ],
               let ty = [t| $(litT (strTyLit l)) |] ]
               ++
    [ mkRecord c [| fixR $(
@@ -34,6 +34,6 @@ mkDefs (\c -> [ valD (varP (mkName (c : l)))
                     (\x xs -> [| $xs :& $x |])
                     [| X |]
                     [ [| $(dyn (c : show n)) := $sn |]
-                    | n <- [ 0 .. NN :: Int ],
+                    | n <- [ 0 .. fieldBound :: Int ],
                     let sn = [| n :: Int |] ]) |]  ])
 

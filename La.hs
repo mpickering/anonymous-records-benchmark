@@ -9,9 +9,9 @@ import Labels
 import Language.Haskell.TH
 import THCommon
 
--- make a record of NN+1 entries
+-- make a record of fieldBound+1 entries
 mkDefs (\c ->
-  [ mkRecord c (appsE $ (conE (tupleDataName ( NN + 1))) :
+  [ mkRecord c (appsE $ (conE (tupleDataName ( fieldBound + 1))) :
                 [ [| $(labelE ([c] ++ show n)) := $sn |]
-                  | n <- [ 0 .. NN :: Int ],
+                  | n <- [ 0 .. fieldBound :: Int ],
                   let sn = [| n :: Int |] ])])
